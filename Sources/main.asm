@@ -80,10 +80,11 @@ _Startup:
 	
 	Capture_Data:	BRCLR	1,	PTAD,	Debounce			; Capture first operand					
 					BRCLR	2,	PTAD,	Debounce			; Capture second operand
-					BRCLR	0,	PTAD,	Debounce		; Capture second operand
+					BRCLR	0,	PTAD,	Debounce			; Capture second operand
 					
 					BRA		Capture_Data	
 			
+			;agregar comentario
 	; ********** Subrutines or Functions ***********
 	
 	
