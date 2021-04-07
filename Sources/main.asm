@@ -22,6 +22,11 @@
             ORG    Z_RAMStart         ; $00B0 -> Para declarar las variables dentro de la pagina cero
 
 ;
+
+;****************** Define Constants *********************
+
+MASK_OP:		EQU %00011000
+
 ;****************** Define Variables *********************
 ; 
 
@@ -30,7 +35,7 @@ v_operand_1:		DS.B	1
 v_operand_2:		DS.B	1
 c_cap_operand_1:	DS.B	1
 c_cap_operand_2:	DS.B	1
-c_op_name: 			DS.B	1
+c_op_type: 			DS.B	1
 
 ;
 ;******************* code section ******************
@@ -63,44 +68,39 @@ _Startup:
 			CLR		v_operand_1
 			CLR		c_cap_operand_1
 			CLR		c_cap_operand_2
-			CLR		c_op_name
+			CLR		c_op_type
 	;			
 	; *********** Initializing Input Ports ***********
 	;
+	; *********** Definition Input Port A ******************
+	;
+	; Bit 0 for the start control signal
+	; Bit 1 for the capture signal of the first operand
+	; Bit 2 for the capture signal of the second operand
+	; Bit 3 and 4 for the operation type signal
+	;
+	;******************************************************
 	
 			MOV		#$FF,	PTAD			; Control signals enter this port 			
 			MOV		#$00,	PTADD			
 			
 			MOV		#$00,	PTBD			; Operands enter this port
 			MOV		#$00,	PTBDD			;
-	
+			
+			MOV		#$FF,	v_operand_1
+			MOV		#$01,	v_operand_2
+			
 	;	
-	; *********** Run Code ***********
+	; *********** Main loop ***********
 	;
 	
-	Capture_Data:	BRCLR	1,	PTAD,	Debounce			; Capture first operand					
+	Capture_Data:	BRCLR	0,	PTAD,	Debounce			; Capture second operand
+					BRCLR	1,	PTAD,	Debounce			; Capture first operand					
 					BRCLR	2,	PTAD,	Debounce			; Capture second operand
-					BRCLR	0,	PTAD,	Debounce			; Capture second operand
 					
 					BRA		Capture_Data	
 			
-			;agregar comentario
-	; ********** Subrutines or Functions ***********
-	
-	
-	; ***** Wait debounce *****
-	Debounce:		LDHX	#5000							; Charge HX Register
-	
-		Delay:			AIX		#-1							; to subtract 1 from the hx register
-						CPHX	#0							; Compare hx register to zero
-						BNE		Delay						; Branch if Z=0 -> not Equal
-						
-						BRCLR	1, 	PTAD,	Capture_Op_1
-						BRCLR	2, 	PTAD,	Capture_Op_2
-						BRCLR	0,	PTAD,	Start_Operation
-						
-						BRA 	Capture_Data
-						
+	; ********** Subrutines or Functions ***********						
 						
 	; ***** Capture operands *****				
 	Capture_Op_1:		MOV		PTBD,	v_operand_1 	; first operand is captured
@@ -109,11 +109,54 @@ _Startup:
 	Capture_Op_2:		MOV		PTBD,	v_operand_2 	; second operand is captured
 						BRA		Capture_Data
 
-	; ***** Start Operation *****
-	Start_Operation:		CLRA
-							LDA		#$90
-							STA		$100	
-							BRA		Capture_Data
+	; ***** Select Operation *****
+	Select_Operation:		CLRA
+							LDA		PTAD
+							AND		#MASK_OP
+							
+							CBEQA	#$00,	Sum					;Realize conditionals 
+							CBEQA	#$08,	Subtraction
+							CBEQA	#$10,	Multiplication
+							CBEQA	#$18,	Division
+							
+							BRA		Capture_Data				; for the moment
+	
+	; ***** Sum Operation *****
+	Sum:		CLRA
+				LDA		v_operand_1
+				ADD		v_operand_2
+				
+				BRA		Capture_Data		
+				
+	; ***** Subtraction Operation *****
+	Subtraction:		CLRA
+						LDA		v_operand_1
+						SUB		v_operand_2
+				
+						BRA		Capture_Data
+						
+	; ***** Multiplication Operation *****
+	Multiplication:		BRA		Capture_Data
+	
+	; ***** Division Operation *****
+	Division:		BRA		Capture_Data
+	
+							
+	; ***** Wait debounce *****
+	Debounce:		LDHX	#5000							; Charge HX Register
+	
+		Delay:		AIX		#-1								; to subtract 1 from the hx register
+					CPHX	#0								; Compare hx register to zero
+					BNE		Delay							; Branch if Z=0 -> not Equal
+						
+						
+					BRCLR	0,	PTAD,	Select_Operation	; Confirm inputs
+					BRCLR	1, 	PTAD,	Capture_Op_1    
+					BRCLR	2, 	PTAD,	Capture_Op_2
+						
+						
+					BRA 	Capture_Data					; Return main loop (Capture_Data)
+						
 	
 Here:		BRA		Here
 						
