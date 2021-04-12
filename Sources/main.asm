@@ -129,7 +129,8 @@ _Startup:
 				BRA		Capture_Data		
 				
 	; ***** Subtraction Operation *****
-	; soplatin
+	; soplatin tin tin
+	; soplatin tin tin
 	Subtraction:		CLRA
 						LDA		v_operand_1
 						SUB		v_operand_2
