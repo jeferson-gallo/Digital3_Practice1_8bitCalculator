@@ -176,6 +176,7 @@ _Startup:
 					BRA 	Capture_Data					; Return main loop (Capture_Data)
 					
 	; ***************** Mensages ********************
+	
 	Overflow_Message:		CLRA
 							LDA		message_overflow
 							STA		show_message
