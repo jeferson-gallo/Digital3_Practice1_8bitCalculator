@@ -21,12 +21,6 @@
 ;
             ORG    Z_RAMStart         ; $00B0 -> Para declarar las variables dentro de la pagina cero
 
-;
-
-;****************** Define Constants *********************
-
-MASK_OP:		EQU %00011000
-MASK_V:			EQU %10000000
 
 ;****************** Define Variables *********************
 ; 
@@ -34,13 +28,20 @@ MASK_V:			EQU %10000000
 c_start:			DS.B	1            
 v_operand_1:		DS.B	1
 v_operand_2:		DS.B	1
-result:				DS.B	1
+v_sign_op1:			DS.B	1 ;Falta limpiar
+v_sign_op2:			DS.B	1
+result:				DS.B	2
 
 
 show_message:		DS.B	1
 
 
 			ORG    RAMStart         ; $0100 -> Para declarar las variables fuera
+
+;****************** Define Constants *********************
+
+MASK_OP:		EQU %00011000
+MASK_V:			EQU %10000000
 
 
 
@@ -98,8 +99,8 @@ _Startup:
 			MOV		#$00,	PTBD			; Operands enter this port
 			MOV		#$00,	PTBDD			;
 			
-			MOV		#$FF,	v_operand_1
-			MOV		#$01,	v_operand_2
+			MOV		#$38,	v_operand_1		; Dec = 56    - Hex = 38
+			MOV		#$92,	v_operand_2		; Dec = -110  - Hex = 92
 			
 	;	
 	; *********** Main loop ***********
@@ -112,6 +113,22 @@ _Startup:
 					BRA		Capture_Data	
 			
 	; ********** Subrutines or Functions ***********						
+	
+	; ***** Wait debounce *****
+	Debounce:		LDHX	#5000							; Charge HX Register
+	
+		Delay:		AIX		#-1								; to subtract 1 from the hx register
+					CPHX	#0								; Compare hx register to zero
+					BNE		Delay							; Branch if Z=0 -> not Equal
+						
+						
+					BRCLR	0,	PTAD,	Select_Operation	; Confirm inputs
+					BRCLR	1, 	PTAD,	Capture_Op_1    
+					BRCLR	2, 	PTAD,	Capture_Op_2
+						
+						
+					BRA 	Capture_Data					; Return main loop (Capture_Data)
+	
 						
 	; ***** Capture operands *****				
 	Capture_Op_1:		MOV		PTBD,	v_operand_1 	; first operand is captured
@@ -154,40 +171,72 @@ _Startup:
 						BRA		Capture_Data
 						
 	; ***** Multiplication Operation *****
-	Multiplication:		BRA		Capture_Data
+	Multiplication:			BSR		Prepare_Op
+							
+							MUL							;Make multiplication between RX and RA
+							
+							STX		result
+							LDX		#result
+							STA		$1,	X		
+							
+							LDA		v_sign_op1
+							EOR		v_sign_op2
+							CBEQA	#$80,	Two_Cmp_rslt
+							
+							BRA		Capture_Data
+							
 	
 	; ***** Division Operation *****
 	Division:		BRA		Capture_Data
 	
-							
-	; ***** Wait debounce *****
-	Debounce:		LDHX	#5000							; Charge HX Register
 	
-		Delay:		AIX		#-1								; to subtract 1 from the hx register
-					CPHX	#0								; Compare hx register to zero
-					BNE		Delay							; Branch if Z=0 -> not Equal
-						
-						
-					BRCLR	0,	PTAD,	Select_Operation	; Confirm inputs
-					BRCLR	1, 	PTAD,	Capture_Op_1    
-					BRCLR	2, 	PTAD,	Capture_Op_2
-						
-						
-					BRA 	Capture_Data					; Return main loop (Capture_Data)
+	Prepare_Op:		BRSET	7,	v_operand_1,	Two_Cmp_op1
+					LDX		v_operand_1
+					MOV		#$00,	v_sign_op1
+									
+	continue_1:		BRSET	7,	v_operand_2,	Two_Cmp_op2
+					LDA		v_operand_2
+					MOV		#$00,	v_sign_op2
 					
+					RTS		; Retornar a sub rutina	
+	
+	Two_Cmp_op1:	LDX		v_operand_1
+					NEGX
+					MOV		#$80,	v_sign_op1
+					
+					BRA		continue_1
+					
+	Two_Cmp_op2:	LDA		v_operand_2
+					NEGA
+					MOV		#$80,	v_sign_op2
+					
+					RTS		;Retornar a sub rutina
+	
+	Two_Cmp_rslt:	LDX		#result
+					COM		,X
+					COM		$1,	X
+					
+					LDHX	result
+					AIX		#$01
+					STHX	result
+					
+					
+					JMP		Capture_Data						
+	
+	
 	; ***************** Mensages ********************
 	
 	Overflow_Message:		CLRA
 							LDA		message_overflow
 							STA		show_message
 										
-							BRA 	Capture_Data
+							JMP 	Capture_Data
 							
 	Correct_Message:		CLRA
 							LDA		message_correct
 							STA		show_message
 								
-							BRA 	Capture_Data
+							JMP 	Capture_Data
 	
 Here:		BRA		Here
 						
