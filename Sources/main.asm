@@ -26,6 +26,7 @@
 ;****************** Define Constants *********************
 
 MASK_OP:		EQU %00011000
+MASK_V:			EQU %10000000
 
 ;****************** Define Variables *********************
 ; 
@@ -33,9 +34,19 @@ MASK_OP:		EQU %00011000
 c_start:			DS.B	1            
 v_operand_1:		DS.B	1
 v_operand_2:		DS.B	1
-c_cap_operand_1:	DS.B	1
-c_cap_operand_2:	DS.B	1
-c_op_type: 			DS.B	1
+result:				DS.B	1
+
+
+show_message:		DS.B	1
+
+
+			ORG    RAMStart         ; $0100 -> Para declarar las variables fuera
+
+
+
+message_overflow:	DC.B	"Oveflow"
+message_correct:	DC.B	"Correct"
+
 
 ;
 ;******************* code section ******************
@@ -66,9 +77,9 @@ _Startup:
 			CLR		c_start
 			CLR		v_operand_1
 			CLR		v_operand_1
-			CLR		c_cap_operand_1
-			CLR		c_cap_operand_2
-			CLR		c_op_type
+			CLR		result
+			
+			
 	;			
 	; *********** Initializing Input Ports ***********
 	;
@@ -126,6 +137,13 @@ _Startup:
 				LDA		v_operand_1
 				ADD		v_operand_2
 				
+				STA		result
+				
+				TPA
+				AND		#MASK_V
+				CBEQA	#$80,	Overflow_Message
+				CBEQA	#$00,	Correct_Message	
+				
 				BRA		Capture_Data		
 				
 	; ***** Subtraction Operation *****
@@ -156,7 +174,19 @@ _Startup:
 						
 						
 					BRA 	Capture_Data					; Return main loop (Capture_Data)
-						
+					
+	; ***************** Mensages ********************
+	Overflow_Message:		CLRA
+							LDA		message_overflow
+							STA		show_message
+										
+							BRA 	Capture_Data
+							
+	Correct_Message:		CLRA
+							LDA		message_correct
+							STA		show_message
+								
+							BRA 	Capture_Data
 	
 Here:		BRA		Here
 						
