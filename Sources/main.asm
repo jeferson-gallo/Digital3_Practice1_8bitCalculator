@@ -78,6 +78,8 @@ _Startup:
 			CLR		c_start
 			CLR		v_operand_1
 			CLR		v_operand_1
+			CLR 	v_sign_op1
+			CLR 	v_sign_op2
 			CLR		result
 			
 			
@@ -99,8 +101,9 @@ _Startup:
 			MOV		#$00,	PTBD			; Operands enter this port
 			MOV		#$00,	PTBDD			;
 			
-			MOV		#$38,	v_operand_1		; Dec = 56    - Hex = 38
-			MOV		#$92,	v_operand_2		; Dec = -110  - Hex = 92
+			MOV		#$7F,	v_operand_1		; [MUL] Dec = 56    - Hex = 38 -- [DIV] Dec = 127    - Hex = 7F 
+			MOV		#$FD,	v_operand_2		; [MUL] Dec = -110  - Hex = 92 -- [DIV] Dec = -3    - Hex = FD
+
 			
 	;	
 	; *********** Main loop ***********
@@ -187,33 +190,45 @@ _Startup:
 							
 	
 	; ***** Division Operation *****
-	Division:		BRA		Capture_Data
+	Division:				CLRH
+							BSR		Prepare_Op
+							DIV
+							STA 	result
+							CLRA
+							DIV
+							STA		result+1
+							CLRH
+							LDA		v_sign_op1
+							EOR		v_sign_op2
+							CBEQA	#$80,	Two_Cmp_rslt_div
+							
+							BRA		Capture_Data
 	
 	
 	Prepare_Op:		BRSET	7,	v_operand_1,	Two_Cmp_op1
-					LDX		v_operand_1
+					LDA		v_operand_1
 					MOV		#$00,	v_sign_op1
 									
 	continue_1:		BRSET	7,	v_operand_2,	Two_Cmp_op2
-					LDA		v_operand_2
+					LDX		v_operand_2
 					MOV		#$00,	v_sign_op2
 					
 					RTS		; Retornar a sub rutina	
 	
-	Two_Cmp_op1:	LDX		v_operand_1
-					NEGX
+	Two_Cmp_op1:	LDA		v_operand_1
+					NEGA
 					MOV		#$80,	v_sign_op1
 					
 					BRA		continue_1
 					
-	Two_Cmp_op2:	LDA		v_operand_2
-					NEGA
+	Two_Cmp_op2:	LDX		v_operand_2
+					NEGX
 					MOV		#$80,	v_sign_op2
 					
 					RTS		;Retornar a sub rutina
 	
 	Two_Cmp_rslt:	LDX		#result
-					COM		,X
+					COM		,X			;realiza el complemento a 1
 					COM		$1,	X
 					
 					LDHX	result
@@ -221,7 +236,13 @@ _Startup:
 					STHX	result
 					
 					
-					JMP		Capture_Data						
+					JMP		Capture_Data
+					
+	Two_Cmp_rslt_div:	LDA		result
+						NEGA 	
+						STA		result
+						
+						JMP 	Capture_Data
 	
 	
 	; ***************** Mensages ********************
