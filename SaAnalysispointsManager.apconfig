@@ -1,6 +1,6 @@
 <Analysispoints>
 	<Name>AnalysispointsManager</Name>
-	<ProjectPath>D:/UdeA/9_Noveno_Semestre/Digi_3/Workspace/Practice_1_Calculator_8bits/SaAnalysispointsManager.apconfig</ProjectPath>
+	<ProjectPath>D:/UdeA/9_Noveno_Semestre/Digi_3/Workspace/Digital3_Practice1_8bitCalculator/SaAnalysispointsManager.apconfig</ProjectPath>
 	<MaxNumberOfCores>1</MaxNumberOfCores>
 	<Comments>Analysispoints Manager</Comments>
 	<IgnoreAll>false</IgnoreAll>
