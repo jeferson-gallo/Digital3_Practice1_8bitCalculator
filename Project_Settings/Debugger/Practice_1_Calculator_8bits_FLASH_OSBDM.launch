@@ -168,12 +168,12 @@
 <booleanAttribute key="org.eclipse.cdt.launch.ENABLE_RESTORE_WATCHPOINTS" value="true"/>
 <booleanAttribute key="org.eclipse.cdt.launch.ENABLE_VARIABLE_BOOKKEEPING" value="false"/>
 <stringAttribute key="org.eclipse.cdt.launch.PROGRAM_NAME" value="FLASH/Practice_1_Calculator_8bits.obj"/>
-<stringAttribute key="org.eclipse.cdt.launch.PROJECT_ATTR" value="Digital3_Practice1_8bitCalculator"/>
+<stringAttribute key="org.eclipse.cdt.launch.PROJECT_ATTR" value="Practice_1_Calculator_8bits"/>
 <stringAttribute key="org.eclipse.cdt.launch.PROJECT_BUILD_CONFIG_ID_ATTR" value="toolchain.config.hcs08.absoluteAssembly.release.1448824626"/>
 <intAttribute key="org.eclipse.cdt.launch.SET_REGULAR_BREAKPOINT_TYPE_AS" value="0"/>
 <booleanAttribute key="org.eclipse.cdt.launch.USE_SET_REGULAR_BREAKPOINT_TYPE_AS" value="false"/>
 <listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_PATHS">
-<listEntry value="/Digital3_Practice1_8bitCalculator"/>
+<listEntry value="/Practice_1_Calculator_8bits"/>
 </listAttribute>
 <listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_TYPES">
 <listEntry value="4"/>

@@ -3494,7 +3494,8 @@ v_operand_1:		DS.B	1
 v_operand_2:		DS.B	1
 v_sign_op1:			DS.B	1 ;Falta limpiar
 v_sign_op2:			DS.B	1
-result:				DS.B	2
+result:				DS.W	1
+res2:				DS.L	1
 
 
 show_message:		DS.B	1
@@ -3509,9 +3510,12 @@ MASK_V:			EQU %10000000
 
 
 
-message_overflow:	DC.B	"Oveflow"
-message_correct:	DC.B	"Correct"
-
+message_1:			DC.B	"Resultado: "
+message_sign:		DC.B	"-"			;"", "-"
+message_rst_1:		DC.B	$18				;42.33
+message_dot:		DC.B	""			;" ", "."
+message_rst_2:		DC.B	$10				;42.33
+message_warning:	DC.B	" Correcto"
 
 ;
 ;******************* code section ******************
@@ -3642,9 +3646,14 @@ _Startup:
 							
 							MUL							;Make multiplication between RX and RA
 							
-							STX		result
-							LDX		#result
-							STA		$1,	X		
+							PSHX
+							TAX
+							PULH
+							STHX	result
+							
+							;STX		result
+							;LDX		#result
+							;STA		$1,	X		
 							
 							LDA		v_sign_op1
 							EOR		v_sign_op2
@@ -3664,7 +3673,7 @@ _Startup:
 							CLRH
 							LDA		v_sign_op1
 							EOR		v_sign_op2
-							CBEQA	#$80,	Two_Cmp_rslt_div
+							CBEQA	#$80,	Two_Cmp_rslt
 							
 							BRA		Capture_Data
 	
@@ -3691,14 +3700,15 @@ _Startup:
 					
 					RTS		;Retornar a sub rutina
 	
-	Two_Cmp_rslt:	LDX		#result
+	Two_Cmp_rslt:	CLRH
+					CLRX
+					LDX		#result
 					COM		,X			;realiza el complemento a 1
 					COM		$1,	X
 					
 					LDHX	result
 					AIX		#$01
 					STHX	result
-					
 					
 					JMP		Capture_Data
 					
@@ -3712,14 +3722,10 @@ _Startup:
 	; ***************** Mensages ********************
 	
 	Overflow_Message:		CLRA
-							LDA		message_overflow
-							STA		show_message
-										
+							
 							JMP 	Capture_Data
 							
-	Correct_Message:		CLRA
-							LDA		message_correct
-							STA		show_message
+	Correct_Message:		CLRA						
 								
 							JMP 	Capture_Data
 	
